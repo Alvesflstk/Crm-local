@@ -23,7 +23,6 @@ class Main:
         self.banner = ctk.CTkLabel(self.container,image=self.banner_image,text="")
         self.banner.place(x=1,y=1)
 
-
 # classe  de alunos >>>
 class crud_membros:
     def __init__(self,container,window):
@@ -72,6 +71,7 @@ class crud_membros:
             if resultado:
                 # Exibindo as informações do cliente e suas medidas corporais
                 self.resultado_lista = list(resultado[0])
+                self.list_medidas = self.resultado_lista[6:]
                 # print(resultado_lista)
                 
             else:
@@ -93,28 +93,19 @@ class crud_membros:
         self.endereco.insert(0,f'{self.resultado_lista[2]}')
         self.Cliente.insert(0,f'{self.resultado_lista[1]}')
         self.cpf.insert(0,f'{self.resultado_lista[3]}')
+    def insert_info_medidas_clientes(self):
+        item = self.treeview.selection()[0]
+        items_values = self.treeview.item(item,"values")
+        cliente_id = int(items_values[0])
+        self.consulta(cliente_id=cliente_id)
         
-    def mover_balao(self):
-        def ease_in_out(t):
-            return 0.5 - 0.5 * math.cos(t * math.pi)
-        self.balao.configure(width=220,height =60, fg_color='#ed9f0e')
-        self.imgcheck = ctk.CTkImage(dark_image=Image.open('public/images/path/chekout.png'),size=(206,40))
-        self.label_igm_check = ctk.CTkLabel(self.balao,image=self.imgcheck,text='')
-        self.label_igm_check.pack(pady=10,padx=10)
-        posicao_inicial = 480
-        posicao_final = 30
-        num_frames = 20
-        for i in range(num_frames + 1):
-            t = i / num_frames
-            esasy_t  = ease_in_out(t)
-            y = posicao_inicial - (posicao_inicial - posicao_final) * esasy_t
-            self.balao.place(x=400, y=y)
-            self.tab_1.update()
-            time.sleep(0.1)
-        self.balao.destroy()
-    
-    def crud_pessoal(self):
-        self.mover_balao()    
+        list_entrys = [self.entry_peitoral,self.entry_ombro_e,self.entry_ombro_d,self.entry_bi_d_rlx,self.entry_bi_d_ctr,self.entry_bi_e_rlx,self.entry_bi_e_ctr,self.entry_tri_d_rlx,self.entry_tri_d_ctr,self.entry_tri_e_rlx,self.entry_tri_e_ctr,self.entry_coxa_d,self.entry_coxa_e,self.entry_pantu_d,self.entry_pantu_e]
+        
+        for widget in list_entrys :
+            for i in self.list_medidas:
+                widget.delete(0,tk.END)
+                widget.insert(f'{i}',tk.END)
+
            
     def modificar(self,event):
         #  positions cliente_id and id 4,5
@@ -123,6 +114,7 @@ class crud_membros:
         cliente_id = int(items_values[0])
         self.consulta(cliente_id=cliente_id)
         print(self.resultado_lista)
+        print(self.list_medidas)
 
         # configuração de janela 
         self.toplevel_m = ctk.CTkToplevel(self.window)
@@ -134,9 +126,13 @@ class crud_membros:
         self.tab_1 = self.tabview.add("Dados Pessoais")
         self.tab_2 = self.tabview.add("Dados Físicos")
         self.tabview.pack()
+            
+        self.tabviewDados = ctk.CTkTabview(self.tab_2,width=339,height=498,border_width=0,segmented_button_selected_color='#ed9f0e',segmented_button_selected_hover_color='#ed9f0e',fg_color='#000000')
+        self.tab_3 = self.tabviewDados.add("Superiores")
+        self.tab_4 = self.tabviewDados.add("Inferiores")
+        self.tabviewDados.place(x=290,y=30)    
         
-        
-        # widgets
+        # widgets tab 1
         #labels
         self.Title = ctk.CTkLabel(self.tab_1,text="Editar dados Pessoais",font=('Inria Sans',19,'bold')) 
         self.endereco_ = ctk.CTkLabel(self.tab_1,text='Endereço:',font=('Inria Sans',15,'bold'),text_color='#ED9F0E')
@@ -148,16 +144,13 @@ class crud_membros:
         self.cpf = ctk.CTkEntry(self.tab_1,placeholder_text='CPF:',width=275,height=46,corner_radius=8)
         
         # images 
-        self.img_banner_aluno = ctk.CTkImage(dark_image=Image.open('public/images/path/image_dados_pessoais.png'),size=(317,406))
-        
+        # imagem de tabview tab1
+        self.img_banner_aluno = ctk.CTkImage(dark_image=Image.open('public/images/path/image_dados_pessoais.png'),size=(317,406))       
         self.label_banner = ctk.CTkLabel(self.tab_1,image=self.img_banner_aluno,text='')       
 
-        self.label_banner.place(x=320,y=120)
-        
-        
-        
+        self.label_banner.place(x=320,y=120)   
         # buttons         
-        self.editar = ctk.CTkButton(self.tab_1,text='Atualizar',fg_color='#ED9F0E',text_color='#ffffff',width=100,height=39,corner_radius=5,font=('Inria Sans',16,'bold'),hover_color='#000000',command=self.crud_pessoal)        
+        self.editar = ctk.CTkButton(self.tab_1,text='Atualizar',fg_color='#ED9F0E',text_color='#ffffff',width=100,height=39,corner_radius=5,font=('Inria Sans',16,'bold'),hover_color='#000000')        
         self.editar.place(x=10,y=500)
 
         self.Title.pack(pady=5)      
@@ -169,25 +162,63 @@ class crud_membros:
         self.Cliente.place(x=10,y=145)
         self.cpf.place(x=10,y=225)
         
-        self.insert_info_clientes()
+        self.insert_info_clientes()  
         
-        # self.balao = ctk.CTkFrame(self.tab_1,width=220,height=60,fg_color='#4c956c',corner_radius=20)
-        # self.balao.place(x=400,y=480
         
-        self.balao = ctk.CTkFrame(self.tab_1,width=10,height=10,fg_color='transparent',corner_radius=20)
-        self.balao.place(x=400,y=480)
+        # widgets tab 2
         
-        # self.Quantidade.pack(pady=5)
-        # self.Data.pack(pady=5)
-        # self.FgPag.pack(pady=5)
-        # self.Q_Parcelas.pack(pady=5)
-        # self.Parcela.pack(pady=5)
-        # self.Desconto.pack(pady=5)
-        # self.Entrada.pack(pady=5)
-        # self.Total.pack(pady=5)
-        # self.Status.pack(pady=5)
-        # self.button_atualizar.pack(pady=5)
-             
+        # imagem de tabview tab2
+        self.img_banner_human = ctk.CTkImage(dark_image=Image.open('public/images/path/corpo-humano-movimento.png'),size=(277,497))       
+        self.img_banner_human = ctk.CTkLabel(self.tab_2,image=self.img_banner_human,text='')       
+
+        self.img_banner_human.place(x=3,y=20)  
+        
+        # entrys 
+        self.entry_peitoral = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
+        self.entry_ombro_e = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
+        self.entry_ombro_d = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
+        self.entry_bi_d_rlx = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
+        self.entry_bi_d_ctr = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
+        self.entry_bi_e_rlx = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
+        self.entry_bi_e_ctr = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
+        self.entry_tri_d_rlx = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
+        self.entry_tri_d_ctr = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
+        self.entry_tri_e_rlx  = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
+        self.entry_tri_e_ctr = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
+        self.entry_coxa_d = ctk.CTkEntry(self.tab_2,placeholder_text='cm',width=100,height=30) 
+        self.entry_coxa_e = ctk.CTkEntry(self.tab_2,placeholder_text='cm',width=100,height=30) 
+        self.entry_pantu_d = ctk.CTkEntry(self.tab_2,placeholder_text='cm',width=100,height=30) 
+        self.entry_pantu_e = ctk.CTkEntry(self.tab_2,placeholder_text='cm',width=100,height=30)
+        # labels 
+        self.Label_peitoral = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Peitoral',text_color='#ED9F0E' ) 
+        self.Label_ombro_e = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Ombro E',text_color='#ED9F0E' ) 
+        self.Label_ombro_d = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Ombro D',text_color='#ED9F0E' ) 
+        self.Label_bi_d_rlx = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Bíxeps Relaxado D',text_color='#ED9F0E' ) 
+        self.Label_bi_d_ctr = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
+        self.Label_bi_e_rlx = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Bíxeps Relaxado E',text_color='#ED9F0E' ) 
+        self.Label_bi_e_ctr = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
+        self.Label_tri_d_rlx = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
+        self.Label_tri_d_ctr = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
+        self.Label_tri_e_rlx  = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
+        self.Label_tri_e_ctr = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
+        self.Label_coxa_d = ctk.CTkLabel(self.tab_2,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
+        self.Label_coxa_e = ctk.CTkLabel(self.tab_2,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
+        self.Label_pantu_d = ctk.CTkLabel(self.tab_2,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
+        self.Label_pantu_e = ctk.CTkLabel(self.tab_2,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
+        
+        
+        
+
+        self.Label_peitoral.place(x=5,y=10)
+        self.Label_ombro_e.place(x=5,y=40)
+        
+        self.entry_peitoral.place(x=80,y=10)
+        
+        # positions 
+
+        
+           
+            
 
     def main(self):
         # configuração de Treeview 
@@ -440,6 +471,7 @@ class container:
 
         self.posicao_geometrica = f"{self.largura_janela}x{self.altura_janela}+{self.x_pos}+{self.y_pos}"
         janela.geometry(self.posicao_geometrica)
+        janela.resizable(False,False)
 
     def register(self):
         register(self.container_before)
@@ -480,4 +512,4 @@ class container:
         self.button_config.place(x=23,y=473)
 
 if __name__ == '__main__':
-    container() 
+    container()
