@@ -44,11 +44,9 @@ class crud_membros:
     
     def fill_treeview(self,treeview):
         data = self.fetch_data_from_postgresql()
-        for index, row in enumerate(data):
-            if index % 2 == 0:
-                treeview.insert('', 'end', values=row, tags=('even',))
-            else:
-                treeview.insert('', 'end', values=row, tags=('odd',))
+        for idx, row in enumerate(data):
+            tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
+            treeview.insert('', 'end', values=row, tags=tag)
 
     def membros_f(self):
         for widget in self.container.winfo_children():
@@ -73,7 +71,8 @@ class crud_membros:
                 self.resultado_lista = list(resultado[0])
                 self.list_medidas = self.resultado_lista[6:]
                 # print(resultado_lista)
-                
+                conn.commit()
+                conn.close()
             else:
                 print("Cliente não encontrado.")
 
@@ -98,15 +97,33 @@ class crud_membros:
         items_values = self.treeview.item(item,"values")
         cliente_id = int(items_values[0])
         self.consulta(cliente_id=cliente_id)
-        
+        print(self.list_medidas)
         list_entrys = [self.entry_peitoral,self.entry_ombro_e,self.entry_ombro_d,self.entry_bi_d_rlx,self.entry_bi_d_ctr,self.entry_bi_e_rlx,self.entry_bi_e_ctr,self.entry_tri_d_rlx,self.entry_tri_d_ctr,self.entry_tri_e_rlx,self.entry_tri_e_ctr,self.entry_coxa_d,self.entry_coxa_e,self.entry_pantu_d,self.entry_pantu_e]
         
-        for widget in list_entrys :
-            for i in self.list_medidas:
-                widget.delete(0,tk.END)
-                widget.insert(f'{i}',tk.END)
-
-           
+        for widget,i in zip(list_entrys,self.list_medidas):
+            widget.delete(0,tk.END)
+            widget.insert(0,f'{i}')
+    def pesquisa(self):
+        for item in self.treeview.get_children():
+            self.treeview.delete(item)
+            
+        conexao = sqlite3.connect('database.db')
+        cursor = conexao.cursor()
+        
+        termo_pesquisa = self.input_pesquisa.get()   
+        
+        if termo_pesquisa == '':
+            self.fill_treeview(self.treeview)
+        else:
+            cursor.execute('SELECT * FROM clientes WHERE nome LIKE ? ', ('%' + termo_pesquisa + '%',)) 
+            for index, row in enumerate(cursor.fetchall()):
+                tag = 'evenrow' if index % 2 == 0 else 'oddrow'
+                self.treeview.insert('', 'end', values=row, tags=tag)
+            
+            
+        conexao.commit()
+        conexao.close()
+            
     def modificar(self,event):
         #  positions cliente_id and id 4,5
         item = self.treeview.selection()[0]
@@ -127,7 +144,7 @@ class crud_membros:
         self.tab_2 = self.tabview.add("Dados Físicos")
         self.tabview.pack()
             
-        self.tabviewDados = ctk.CTkTabview(self.tab_2,width=339,height=498,border_width=0,segmented_button_selected_color='#ed9f0e',segmented_button_selected_hover_color='#ed9f0e',fg_color='#000000')
+        self.tabviewDados = ctk.CTkTabview(self.tab_2,width=339,height=498,border_width=0,segmented_button_selected_color='#ed9f0e',segmented_button_selected_hover_color='#ed9f0e')
         self.tab_3 = self.tabviewDados.add("Superiores")
         self.tab_4 = self.tabviewDados.add("Inferiores")
         self.tabviewDados.place(x=290,y=30)    
@@ -175,51 +192,88 @@ class crud_membros:
         
         # entrys 
         self.entry_peitoral = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
-        self.entry_ombro_e = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
-        self.entry_ombro_d = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
+        self.entry_ombro_e = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=130,height=30) 
+        self.entry_ombro_d = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=130,height=30) 
         self.entry_bi_d_rlx = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
         self.entry_bi_d_ctr = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
         self.entry_bi_e_rlx = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
         self.entry_bi_e_ctr = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
         self.entry_tri_d_rlx = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
         self.entry_tri_d_ctr = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
-        self.entry_tri_e_rlx  = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
-        self.entry_tri_e_ctr = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=100,height=30) 
-        self.entry_coxa_d = ctk.CTkEntry(self.tab_2,placeholder_text='cm',width=100,height=30) 
-        self.entry_coxa_e = ctk.CTkEntry(self.tab_2,placeholder_text='cm',width=100,height=30) 
-        self.entry_pantu_d = ctk.CTkEntry(self.tab_2,placeholder_text='cm',width=100,height=30) 
-        self.entry_pantu_e = ctk.CTkEntry(self.tab_2,placeholder_text='cm',width=100,height=30)
+        self.entry_tri_e_rlx  = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=130,height=30) 
+        self.entry_tri_e_ctr = ctk.CTkEntry( self.tab_3,placeholder_text='cm',width=130,height=30) 
+        self.entry_coxa_d = ctk.CTkEntry(self.tab_4,placeholder_text='cm',width=130,height=30) 
+        self.entry_coxa_e = ctk.CTkEntry(self.tab_4,placeholder_text='cm',width=130,height=30) 
+        self.entry_pantu_d = ctk.CTkEntry(self.tab_4,placeholder_text='cm',width=130,height=30) 
+        self.entry_pantu_e = ctk.CTkEntry(self.tab_4,placeholder_text='cm',width=130,height=30)
         # labels 
-        self.Label_peitoral = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Peitoral',text_color='#ED9F0E' ) 
-        self.Label_ombro_e = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Ombro E',text_color='#ED9F0E' ) 
-        self.Label_ombro_d = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Ombro D',text_color='#ED9F0E' ) 
-        self.Label_bi_d_rlx = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Bíxeps Relaxado D',text_color='#ED9F0E' ) 
-        self.Label_bi_d_ctr = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
+        self.Label_peitoral = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Peitoral:',text_color='#ED9F0E' ) 
+        self.Label_ombro_e = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Ombro E:',text_color='#ED9F0E' ) 
+        self.Label_ombro_d = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Ombro D:',text_color='#ED9F0E' ) 
+        self.Label_bi_d_rlx = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Bíxeps Relaxado D:',text_color='#ED9F0E' ) 
+        self.Label_bi_d_ctr = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Bíxeps Contraído E:',text_color='#ED9F0E' ) 
         self.Label_bi_e_rlx = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Bíxeps Relaxado E',text_color='#ED9F0E' ) 
-        self.Label_bi_e_ctr = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
-        self.Label_tri_d_rlx = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
-        self.Label_tri_d_ctr = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
-        self.Label_tri_e_rlx  = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
-        self.Label_tri_e_ctr = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
-        self.Label_coxa_d = ctk.CTkLabel(self.tab_2,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
-        self.Label_coxa_e = ctk.CTkLabel(self.tab_2,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
-        self.Label_pantu_d = ctk.CTkLabel(self.tab_2,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
-        self.Label_pantu_e = ctk.CTkLabel(self.tab_2,font=('Inria Sans',13),text='papapap',text_color='#ED9F0E' ) 
+        self.Label_bi_e_ctr = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Bíxeps Contraído E',text_color='#ED9F0E' ) 
+        self.Label_tri_d_rlx = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Tríceps Relaxado D:',text_color='#ED9F0E' ) 
+        self.Label_tri_d_ctr = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Tríceps Contraído D:',text_color='#ED9F0E' ) 
+        self.Label_tri_e_rlx  = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Tríceps Relaxado E:',text_color='#ED9F0E' ) 
+        self.Label_tri_e_ctr = ctk.CTkLabel( self.tab_3,font=('Inria Sans',13),text='Tríceps Contraído E:',text_color='#ED9F0E' ) 
+        self.Label_coxa_d = ctk.CTkLabel(self.tab_4,font=('Inria Sans',13),text='Coxa Direita',text_color='#ED9F0E' ) 
+        self.Label_coxa_e = ctk.CTkLabel(self.tab_4,font=('Inria Sans',13),text='Coxa Esquerda',text_color='#ED9F0E' ) 
+        self.Label_pantu_d = ctk.CTkLabel(self.tab_4,font=('Inria Sans',13),text='Panturrilha Direita',text_color='#ED9F0E' ) 
+        self.Label_pantu_e = ctk.CTkLabel(self.tab_4,font=('Inria Sans',13),text='Panturrilha Esquerda',text_color='#ED9F0E' ) 
         
+        self.Button_update = ctk.CTkButton(self.tab_4,text='Atualizar',fg_color='#ED9F0E',width=100,height=40,font=('Inria Sans',16,'bold'))
         
+        # Labels
+        self.Label_peitoral.place(x=5,y=12)
         
-
-        self.Label_peitoral.place(x=5,y=10)
-        self.Label_ombro_e.place(x=5,y=40)
+        self.Label_ombro_e.place(x=5,y=80)
+        self.Label_ombro_d.place(x=160,y=80)
         
-        self.entry_peitoral.place(x=80,y=10)
+        # bixeps
+        self.Label_bi_d_rlx.place(x=5,y=140)
+        self.Label_bi_d_ctr.place(x=160,y=140)
         
-        # positions 
-
+        self.Label_bi_e_rlx.place(x=5,y=200)
+        self.Label_bi_e_ctr.place(x=160,y=200)
         
+        # triceps
+        self.Label_tri_d_rlx.place(x=5,y=260)
+        self.Label_tri_d_ctr.place(x=160,y=260)
+        
+        self.Label_tri_e_rlx.place(x=5,y=320)
+        self.Label_tri_e_ctr.place(x=160,y=320)        
+        # Entrys
+        self.entry_peitoral.place(x=5,y=40)
+        self.entry_ombro_e.place(x=5,y=108)
+        self.entry_ombro_d.place(x=160,y=108)
+        self.entry_bi_d_rlx.place(x=5,y=168)
+        self.entry_bi_d_ctr.place(x=160,y=168)      
+        self.entry_bi_e_rlx.place(x=5,y=228)
+        self.entry_bi_e_ctr.place(x=160,y=228) 
+        self.entry_tri_d_rlx.place(x=5,y=288)
+        self.entry_tri_d_ctr.place(x=160,y=288)      
+        self.entry_tri_e_rlx.place(x=5,y=348)
+        self.entry_tri_e_ctr.place(x=160,y=348)         
            
-            
-
+    # widgets tab 2    
+    # labels    
+        self.Label_coxa_d.place(x=10,y=20)
+        self.Label_coxa_e.place(x=160,y=20)
+        
+        self.Label_pantu_d.place(x=10,y=80)
+        self.Label_pantu_e.place(x=160,y=80)
+        
+    # entrys
+        self.entry_coxa_d.place(x=10,y=48)
+        self.entry_coxa_e.place(x=160,y=48)
+        self.entry_pantu_d.place(x=10,y=108)
+        self.entry_pantu_e.place(x=160,y=108)  
+        
+        self.Button_update.place(x=220,y=405)      
+    
+        self.insert_info_medidas_clientes()
     def main(self):
         # configuração de Treeview 
         style = ttk.Style()
@@ -231,20 +285,18 @@ class crud_membros:
         self.treeview.heading('Endereço', text='Endereço')
         self.treeview.heading('CPF', text='CPF')
         self.treeview.column('Id',width=10)
-        
-        self.treeview.tag_configure('even', background='#1e1e1c')
-        self.treeview.tag_configure('odd', background='#A87D2D')
-        
-        self.fill_treeview(self.treeview)
+              
+        self.treeview.tag_configure('evenrow', background='#C18F33')  
+        self.treeview.tag_configure('oddrow', background='#383e40')  
     
-
+        self.fill_treeview(self.treeview)
         
         self.treeview.place(x=45,y=100,width=1050,height=530)
         
         # Restante dos widgets 
         self.Label_nome = ctk.CTkLabel(self.container,text='Pesquisar Aluno:',text_color='#ED9F0E',height=39,width=100,font=('Inria Sans',16,'bold'))
         self.input_pesquisa = ctk.CTkEntry(self.container,placeholder_text='Pesquisar Aluno',fg_color='#1E1E1E',width=279,height=39,border_color='#2D2A2A',corner_radius=5)
-        self.button_pesquisa = ctk.CTkButton(self.container,text='Buscar',fg_color='#ED9F0E',text_color='#1E1E1E',width=100,height=39,corner_radius=5,font=('Inria Sans',16,'bold'))
+        self.button_pesquisa = ctk.CTkButton(self.container,text='Buscar',fg_color='#ED9F0E',text_color='#1E1E1E',width=100,height=39,corner_radius=5,font=('Inria Sans',16,'bold'),command=self.pesquisa)
         
         
         # Posicionamento dos widgets
