@@ -6,12 +6,8 @@ from tkinter import filedialog
 from PIL import Image
 import customtkinter as ctk
 import random
-import time
-import math
-
 
 ctk.set_appearance_mode("dark")
-
 # classe main a Home 
 class Main:
     def __init__(self,container):
@@ -22,7 +18,140 @@ class Main:
         self.banner_image = ctk.CTkImage(dark_image=Image.open('public/images/Main.png'),size=(1106,647))
         self.banner = ctk.CTkLabel(self.container,image=self.banner_image,text="")
         self.banner.place(x=1,y=1)
+# classe de Pagamentos
+class pagamentos:
+    def __init__(self, container):
+        self.container = container
+        self.destroy_padrao()
+        self.main()
 
+    def destroy_padrao(self):
+        for widget in self.container.winfo_children():
+            widget.destroy()
+    def connect_banc(self):
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor() 
+        
+        cursor.execute("SELECT * FROM pagamentos_parciais")
+        dados = cursor.fetchall()
+        
+         
+        
+        conn.commit()
+        conn.close()   
+        return dados
+    def insert_dados(self,treeview):
+        self.connect_banc()
+        
+        for ixs,row in enumerate(self.connect_banc()):
+
+            tag = 'evenrow' if ixs % 2 == 0 else 'oddrow'
+            treeview.insert('', 'end', values=row, tags=tag)
+    def filtros_serch(self,choice):
+        filtro = self.filtro1.get()
+        conexao = sqlite3.connect('database.db')
+        cursor = conexao.cursor()
+
+        if filtro == '❌':
+            for item in self.max_treview.get_children():
+                self.max_treview.delete(item)
+
+            cursor.execute('SELECT * FROM pagamentos_parciais WHERE Status LIKE ?', ('%' + filtro + '%',))
+                           
+            for idx, row in enumerate(cursor.fetchall()):
+                tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
+                self.max_treview.insert('', 'end', values=row, tags=tag)
+
+        elif filtro == '✅':
+            for item in self.max_treview.get_children():
+                self.max_treview.delete(item)
+
+            cursor.execute('SELECT * FROM pagamentos_parciais WHERE Status LIKE ?', ('%' + filtro + '%',))
+                           
+            for idx, row in enumerate(cursor.fetchall()):
+                tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
+                self.max_treview.insert('', 'end', values=row, tags=tag)
+
+        else:
+            for item in self.max_treview.get_children():
+                self.max_treview.delete(item)
+            self.insert_dados(self.max_treview)         
+    def search(self,event):
+        self.connect_banc() 
+        for item in self.max_treview.get_children():
+            self.max_treview.delete(item)
+           
+        valor = self.input_pesquisar.get().lower()
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor() 
+        cursor.execute('SELECT * FROM pagamentos_parciais WHERE nome LIKE ?', ('%' + valor + '%',))
+        
+        for ixs,row in enumerate(cursor.fetchall()):
+            tag = 'evenrow' if ixs % 2 == 0 else 'oddrow'
+            self.max_treview.insert('', 'end', values=row, tags=tag)
+        conn.commit()
+        conn.close()
+    def search_cpf(self,event):
+        self.connect_banc() 
+        for item in self.max_treview.get_children():
+            self.max_treview.delete(item)
+           
+        valor = self.input_pesquisar_cpf.get().lower()
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor() 
+        cursor.execute('SELECT * FROM pagamentos_parciais WHERE cpf LIKE ?', ('%' + valor + '%',))
+        
+        for ixs,row in enumerate(cursor.fetchall()):
+            tag = 'evenrow' if ixs % 2 == 0 else 'oddrow'
+            self.max_treview.insert('', 'end', values=row, tags=tag)
+        conn.commit()
+        conn.close()
+    def main(self):
+        # Estilos Para Treeview
+        style = ttk.Style()
+        style.configure("Treeview", background="#d3d3d3", foreground="black", rowheight=40, fieldbackground="#d3d3d3",font=('Inria Sans', 12))
+        style.configure("Treeview.Heading", background="blue", foreground="#000000",font=('Inria Sans', 10))  
+        
+        self.max_treview = ttk.Treeview(self.container, columns=['Id','Nome','Endereço','CPF','Status'], show='headings')
+        # configurações
+        self.max_treview.heading('Id', text='Id')
+        self.max_treview.heading('Nome', text='Nome')
+        self.max_treview.heading('Endereço', text='Endereço')
+        self.max_treview.heading('CPF', text='CPF')
+        self.max_treview.heading('Status', text='Status')
+        
+        self.max_treview.column('Id',width=5)
+        self.max_treview.column('Status',width=5)
+
+        self.img_warning = ctk.CTkImage(dark_image=Image.open('public/images/path/warning_aviso.png'),size=(855,98))     
+        
+        self.banner = ctk.CTkLabel(self.container,image=self.img_warning,text='')
+        # widgets da pagina 
+        self.Titulo_pesquisa = ctk.CTkLabel(self.container,text='Pasquisar:',font=('Inria Sans',16,'bold'))
+        
+        self.Titulo_pesquisa_cpf = ctk.CTkLabel(self.container,text='CPF:',font=('Inria Sans',16,'bold'))
+        
+        self.Titulo_filtro = ctk.CTkLabel(self.container,text='Filtros:',font=('Inria Sans',16,'bold'))
+        
+        self.input_pesquisar = ctk.CTkEntry(self.container,width=400,height=35,corner_radius=5,placeholder_text='Nome do Aluno:')
+        self.input_pesquisar_cpf = ctk.CTkEntry(self.container,width=260,height=35,corner_radius=5,placeholder_text='CPF:')
+
+        self.filtro1 = ctk.CTkComboBox(self.container,width=134,height=35,corner_radius=8,values=['ALL','✅','❌'],command=self.filtros_serch)
+        self.Titulo_pesquisa.place(x=300,y=25)
+        self.Titulo_pesquisa_cpf.place(x=20,y=25)
+        self.input_pesquisar.place(x=300,y=60)
+        self.input_pesquisar_cpf.place(x=20,y=60)
+        self.max_treview.place(width=1100,height=350,y=450,x=550,anchor='center')
+        
+        self.Titulo_filtro.place(x=800,y=25)
+        self.filtro1.place(x=800,y=60)
+        self.banner.place(x=20,y=125)
+        self.max_treview.tag_configure('evenrow', background='#926c15')  
+        self.max_treview.tag_configure('oddrow', background='#ffe169')
+        self.insert_dados(self.max_treview)  
+        self.input_pesquisar.bind('<KeyRelease>', self.search)
+        self.input_pesquisar_cpf.bind('<KeyRelease>', self.search_cpf)
+        
 # classe  de alunos >>>
 class crud_membros:
     def __init__(self,container,window):
@@ -533,6 +662,10 @@ class container:
 
     def membros(self):
         crud_membros(self.container_before,self.window)
+        
+    def pagamentos_(self):
+        pagamentos(self.container_before)
+        
     def container_after(self):
         self.container_before = ctk.CTkFrame(self.window,width=1106,height=647,fg_color='#1a1818')
         self.container_before.place(x=92,y=2)
@@ -551,7 +684,7 @@ class container:
         self.button_case = ctk.CTkButton(self.frame_nav,image=self.icon_case_photo,text='', width=32,height=32,fg_color='#1a1818',hover_color='#ED9F0E',command=self.treino)
         self.button_new = ctk.CTkButton(self.frame_nav,image=self.icon_new_photo,text='', width=32,height=32,fg_color='#1a1818',hover_color='#ED9F0E',command=self.register)
         self.button_list = ctk.CTkButton(self.frame_nav,image=self.icon_list_photo,text='', width=32,height=32,fg_color='#1a1818',hover_color='#ED9F0E',command=self.membros)
-        self.button_money = ctk.CTkButton(self.frame_nav,image=self.icon_money_photo,text='', width=32,height=32,fg_color='#1a1818',hover_color='#ED9F0E')
+        self.button_money = ctk.CTkButton(self.frame_nav,image=self.icon_money_photo,text='', width=32,height=32,fg_color='#1a1818',hover_color='#ED9F0E',command=self.pagamentos_)
         self.button_pag = ctk.CTkButton(self.frame_nav,image=self.icon_pag_photo,text='', width=32,height=32,fg_color='#1a1818',hover_color='#ED9F0E')
         self.button_config = ctk.CTkButton(self.frame_nav,image=self.icon_config_photo,text='', width=32,height=32,fg_color='#1a1818',hover_color='#ED9F0E')
 

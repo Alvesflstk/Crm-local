@@ -1,4 +1,3 @@
-from msilib.text import tables
 import sqlite3
 import random
 import string
@@ -166,3 +165,4 @@ def ultimo_id(nome_tabela, nome_coluna_id, nome_banco='database.db'):
     conexao.close()
 
     return ultimo_id
+
