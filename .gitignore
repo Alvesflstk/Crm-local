@@ -2,6 +2,5 @@
 .vscode/
 .idea/
 
-.public/exemplo.py/
-.public/area71.py/
-.public/__tests__/
+
+public/__tests__/
