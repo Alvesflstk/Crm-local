@@ -1,8 +1,7 @@
 .venv/
 .vscode/
 .idea/
-
-
 public/__tests__/
-.gitignore/
-public/main.py/
+.gitignore
+public/main.py
+
