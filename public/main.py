@@ -314,6 +314,8 @@ class wallet:
         self.graficos()
         self.carteira()
         self.historico()
+    
+
 # classe  de alunos >>>
 class crud_membros:
     def __init__(self,container,window):
