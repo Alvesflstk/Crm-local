@@ -3,11 +3,20 @@ import sqlite3
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
+from turtle import bgcolor, title, width
 from PIL import Image
 import customtkinter as ctk
 import random
-
+from matplotlib import colors
+from networkx import radius
+import pandas as pd
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
+import numpy as np
+import turtle
 ctk.set_appearance_mode("dark")
+
+    
 # classe main a Home 
 class Main:
     def __init__(self,container):
@@ -151,7 +160,160 @@ class pagamentos:
         self.insert_dados(self.max_treview)  
         self.input_pesquisar.bind('<KeyRelease>', self.search)
         self.input_pesquisar_cpf.bind('<KeyRelease>', self.search_cpf)
+
+class wallet:
+    def __init__(self,container):
+        self.container = container
+        self.cores = ['red', 'blue', 'green', 'yellow']
+        self.clear_padrao()
+        self.main()
         
+    def clear_padrao(self):
+        for widget in self.container.winfo_children():
+            widget.destroy() 
+    def transform_data(self):
+    
+        conn = sqlite3.connect('database.db')
+        query = "SELECT Status FROM pagamentos_parciais"
+        self.df = pd.read_sql_query(query,conn)
+        x= self.df['Status'].values.tolist()
+        self.z = []
+        self.s = []
+        for i in x:
+            if i == '✅':
+                self.z.append(i)
+            else:
+                self.s.append(i)
+                
+        self.zs = [len(self.z)+10,len(self.s)]
+        print(self.zs)
+        conn.close()
+        return self.zs
+    def carteira(self):
+        price = 60
+        self.transform_data()
+        n_vzs = len(self.z)
+        somatoria  = n_vzs * price
+        self.total.configure(text=f'{somatoria},00') 
+        
+    def graficos(self):  
+           self.transform_data()    
+           cores = ['#000000','#14213d','#fca311','#e5e5e5']
+           fig,ax = plt.subplots()
+           ax.pie(self.zs,colors=cores,radius=3,center=(4,4),
+           wedgeprops={"linewidth":1,"edgecolor":"#14213d"},frame=False)
+           
+           ax.set(xlim=(0, 8),
+           ylim=(0, 8))
+           fig.patch.set_alpha(0)
+           canvas = FigureCanvasTkAgg(fig,master=self.frame_container_grafico)
+           canvas.draw()
+           canvas.get_tk_widget().place(width=400,height=250,y=50)
+           
+    def historico(self):
+        values = []
+        conexao = sqlite3.connect('database.db')
+        cursor = conexao.cursor()
+        
+        cursor.execute("SELECT nome FROM clientes LIMIT 10")
+        resultados = cursor.fetchall()
+        for nome in resultados:
+            values.append(nome[0])
+            
+        print(values)
+
+        for itenms in values:
+            ctk.CTkCheckBox(self.container_historico,text=f'{itenms}',font=('Inria Sans',15,'bold')).pack(anchor='w',pady=10)
+
+        for check in self.container_historico.winfo_children():
+            check.select(1)
+            check.configure(state="disabled")
+            
+
+    def main(self):
+        
+        self.frame_container_grafico = ctk.CTkFrame(self.container,width=400,height=350,fg_color='#ffffff')
+        
+        self.frame_container_grafico.place(x=655,y=20)
+        
+        self.titulo_frame_container_grafico = ctk.CTkLabel(self.frame_container_grafico,text='Pagamentos Mensais (Mês Atual)',text_color='#000000',font=('Inria Sans',20,'bold'))
+        self.titulo_frame_container_grafico.place(x=200,y=20,anchor='center')
+        
+        self.frame1 = ctk.CTkButton(self.frame_container_grafico,width=20,height=20,fg_color='#000000',text='')
+        self.frame1.place(x=10,y=315)
+        self.frame2 = ctk.CTkButton(self.frame_container_grafico,width=20,height=20,fg_color='#14213d',text='')
+        self.frame2.place(x=230,y=315)
+        
+        self.label_frame1 = ctk.CTkLabel(self.frame_container_grafico,text='PAGAMENTOS REALIZADOS',font=('Inria Sans',12,'italic'),text_color='#000000')
+        self.label_frame1.place(x=35,y=312)
+        
+        self.label_frame2 = ctk.CTkLabel(self.frame_container_grafico,text='PENDENTES',font=('Inria Sans',12,'italic'),text_color='#000000')
+        self.label_frame2.place(x=255,y=312)
+        
+        
+        self.meu_saldo_l = ctk.CTkLabel(self.container,text="Minha Cateira:",text_color='#ED9F0E',font=('Inria Sans',36,'bold'))
+        
+        self.total = ctk.CTkLabel(self.container,text='22',font=('Inria Sans',40,'bold'))
+        
+        self.container_metas1 = ctk.CTkFrame(self.container,width=223,height=160)
+        self.container_metas2 = ctk.CTkFrame(self.container,width=223,height=160)
+        # widgets meta 1
+        self.progressbar1 = ctk.CTkProgressBar(self.container_metas1, orientation="horizontal",progress_color=('#1A1818','#1A1818'),mode='determinate')
+        self.progressbar1.set(1)
+        self.progressbar2 = ctk.CTkProgressBar(self.container_metas1, orientation="horizontal",progress_color=('#ED9F0E','#ED9F0E'),mode='determinate')
+        self.progressbar2.set(0.5)
+        
+        self.label_meta = ctk.CTkLabel(self.container_metas1,text="Meta em R$:",font=('Inria Sans',12,'bold'))
+        self.label_meta_rs = ctk.CTkLabel(self.container_metas1,text="1800.46",font=('Inria Sans',12,'bold'))
+        
+        self.label_meta2 = ctk.CTkLabel(self.container_metas1,text="Progresso R$:",font=('Inria Sans',12,'bold'))
+        self.label_meta_rs2 = ctk.CTkLabel(self.container_metas1,text="900.00",font=('Inria Sans',12,'bold'))
+        
+        # widgets meta 2
+        self.label_meta3 = ctk.CTkLabel(self.container_metas2,text="Declínio:",font=('Inria Sans',12,'bold'))
+        self.label_meta_rs3 = ctk.CTkLabel(self.container_metas2,text="⬇⬆",font=('Inria Sans',12,'bold'))  
+
+        self.progressbar3 = ctk.CTkProgressBar(self.container_metas2, orientation="horizontal",progress_color=('#ED9F0E','#ED9F0E'),mode='determinate')
+        self.progressbar3.set(0.5)
+        
+        label_possicionamento = ctk.CTkLabel(self.container_metas2,text='50%',font=('Inria Sans',10,'italic'))
+        label_possicionamento.place(x=100,y=50)        
+        
+        
+        self.label_historico_lancamentos =ctk.CTkLabel(self.container,text='Ultimos Lançamentos',font=('Inria Sans',12,'italic')) 
+        self.container_historico = ctk.CTkScrollableFrame(self.container,width=640,height=200)
+        self.container_historico.place(x=390,y=400)
+        self.label_historico_lancamentos.place(x=390,y=375)
+        
+        
+        self.label_historico_sangrias =ctk.CTkLabel(self.container,text='Historicos de Sangria:',font=('Inria Sans',12,'italic')) 
+        self.hr = ctk.CTkFrame(self.container,width=300,height=2)
+        self.hr.place(x=10,y=200)
+        self.label_historico_sangrias.place(x=10,y=170)
+        
+        
+        self.aviso = ctk.CTkLabel(self.container,text='Você ainda não\n fez nenhuma sangria',font=('Inria Sans',16,'italic'))
+        self.meu_saldo_l.place(x=10,y=10)
+        self.total.place(x=60,y=60)
+        self.aviso.place(x=70,y=350)
+        
+        self.container_metas1.place(x=390,y=20)
+        self.container_metas2.place(x=390,y=210)
+        
+        # positions metas 1 
+        self.progressbar1.place(x=10,y=50)
+        self.label_meta.place(x=10,y=10)
+        self.label_meta2.place(x=10,y=80)
+        self.label_meta_rs.place(x=150,y=10)
+        self.label_meta_rs2.place(x=150,y=80)
+        self.progressbar2.place(x=10,y=120)
+        # positions metas 2
+        self.progressbar3.place(x=10,y=80)
+        self.label_meta3.place(x=10,y=10)
+        self.label_meta_rs3.place(x=190,y=10)
+        self.graficos()
+        self.carteira()
+        self.historico()
 # classe  de alunos >>>
 class crud_membros:
     def __init__(self,container,window):
@@ -666,6 +828,9 @@ class container:
     def pagamentos_(self):
         pagamentos(self.container_before)
         
+    def wallet_(self):
+        wallet(self.container_before)
+        self.window.protocol("WM_DELETE_WINDOW", self.window.quit)
     def container_after(self):
         self.container_before = ctk.CTkFrame(self.window,width=1106,height=647,fg_color='#1a1818')
         self.container_before.place(x=92,y=2)
@@ -685,7 +850,7 @@ class container:
         self.button_new = ctk.CTkButton(self.frame_nav,image=self.icon_new_photo,text='', width=32,height=32,fg_color='#1a1818',hover_color='#ED9F0E',command=self.register)
         self.button_list = ctk.CTkButton(self.frame_nav,image=self.icon_list_photo,text='', width=32,height=32,fg_color='#1a1818',hover_color='#ED9F0E',command=self.membros)
         self.button_money = ctk.CTkButton(self.frame_nav,image=self.icon_money_photo,text='', width=32,height=32,fg_color='#1a1818',hover_color='#ED9F0E',command=self.pagamentos_)
-        self.button_pag = ctk.CTkButton(self.frame_nav,image=self.icon_pag_photo,text='', width=32,height=32,fg_color='#1a1818',hover_color='#ED9F0E')
+        self.button_pag = ctk.CTkButton(self.frame_nav,image=self.icon_pag_photo,text='', width=32,height=32,fg_color='#1a1818',hover_color='#ED9F0E',command=self.wallet_)
         self.button_config = ctk.CTkButton(self.frame_nav,image=self.icon_config_photo,text='', width=32,height=32,fg_color='#1a1818',hover_color='#ED9F0E')
 
 
@@ -697,4 +862,4 @@ class container:
         self.button_config.place(x=23,y=473)
 
 if __name__ == '__main__':
-    container()
+   container()
